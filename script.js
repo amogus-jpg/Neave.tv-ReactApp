@@ -1,5 +1,8 @@
+import React, { useState, useEffect } from 'react';
+import './styles.css';
+
 const videos = [
-    'videos/aerobics.mp4',
+      'videos/aerobics.mp4',
     'videos/carnival.mp4',
     'videos/club.mp4',
     'videos/special.mp4',
@@ -81,47 +84,59 @@ const videos = [
     'videos/tinker-tailor.mp4'
 ];
 
-let videoPlayer = document.getElementById('videoPlayer');
+function App() {
+  const [currentVideo, setCurrentVideo] = useState('');
 
-const playSoundEffect = () => {
+  useEffect(() => {
+    const playRandomVideo = () => {
+      const randomIndex = Math.floor(Math.random() * videos.length);
+      setCurrentVideo(videos[randomIndex]);
+    };
+
+    playRandomVideo();
+
     const audioContext = new AudioContext();
 
-    fetch('addit/click_sfx.mp3')
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-        .then(audioBuffer => {
-            const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
+    const playSoundEffect = async () => {
+      try {
+        const response = await fetch('addit/click_sfx.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-            source.connect(audioContext.destination);
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        source.start();
+      } catch (error) {
+        console.error('Error loading sound effect:', error);
+      }
+    };
 
-            source.start();
-        })
-        .catch(error => {
-            console.error('Error loading sound effect:', error);
-        });
-};
+    const handlePlayRandomVideo = () => {
+      playSoundEffect();
+      playRandomVideo();
+    };
 
-const playVideoWithSound = (videoSrc) => {
-    if (videoPlayer.src) {
-        videoPlayer.pause();
-        videoPlayer.src = '';
-    }
+    document.addEventListener('click', handlePlayRandomVideo);
 
-    const newVideo = document.createElement('video');
-    newVideo.src = videoSrc;
+    return () => document.removeEventListener('click', handlePlayRandomVideo);
+  }, []);
 
-    videoPlayer.parentNode.replaceChild(newVideo, videoPlayer);
-    videoPlayer = newVideo;
+  return (
+    <div className="app">
+      <video id="videoPlayer" autoPlay loop>
+        <source src={currentVideo} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <div className="scanlines"></div>
+      <a
+        href="https://github.com/amogus-jpg"
+        className="custom-image-link"
+      >
+        <img src="addit/aj_pfp.png" alt="Custom Image" className="custom-image" />
+      </a>
+    </div>
+  );
+}
 
-    newVideo.play();
-
-    playSoundEffect();
-};
-
-const invisibleButton = document.getElementById('invisibleButton');
-invisibleButton.addEventListener('click', () => {
-    const randomIndex = Math.floor(Math.random() * videos.length);
-    const randomVideo = videos[randomIndex];
-    playVideoWithSound(randomVideo);
-});
+export default App;
